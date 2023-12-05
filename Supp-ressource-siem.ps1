@@ -4,39 +4,40 @@
 ETML
 Nom du script: Supp-ressource-siem.ps1
 Auteur: Tecle Siem Biniam
-Date: 15.11.23
+Date: 5.12.23
 *****************************************************************************
 .SYNOPSIS
-Créer un script Powershell pour supprimer les ressources d’un resource-group
+Créer un script PowerShell pour supprimer les ressources d’un resource-group
 
 
 .DESCRIPTION
-Ce script PowerShell permet de supprimer des ressource d'un resource-groupe 
-avec le nom du celui-ci.
+Ce script PowerShell permet de supprimer des ressources d'un groupe de ressources 
+en utilisant son nom.
 
 #>
 
 # *****************************************************************************
 
-# Remplacez ces valeurs par les vôtres
-$resourceGroupName = "NomDuResourceGroup"
-$location = "Switzerland North"
+# Demander à l'utilisateur d'entrer le nom du groupe de ressources
+$resourceGroupName = Read-Host "Entrez le nom du groupe de ressources"
 
-# Connexion à votre compte Azure
+# Connexion à votre compte Azure avec Azure CLI
 az login
 
 # Récupération de la liste des ressources dans le groupe de ressources
-$resources = Get-AzResource -ResourceGroupName $resourceGroupName
+$resources = az resource list --resource-group $resourceGroupName --output json | ConvertFrom-Json
 
 # Suppression de chaque ressource
 foreach ($resource in $resources) {
-    $resourceName = $resource.ResourceName
-    $resourceType = $resource.ResourceType
+    $resourceName = $resource.name
+    $resourceType = $resource.type
 
     Write-Host "Suppression de la ressource : $resourceName de type $resourceType"
     
-    Remove-AzResourceGroup -Name $resourceGroupName -Force
-    
+    az resource delete --ids $resource.id --yes
 }
 
-Write-Host "le groupe $resourceGroupName est supprimée"
+# Suppression du groupe de ressources une fois que toutes les ressources sont supprimées
+az group delete --name $resourceGroupName --yes
+
+Write-Host "Le groupe $resourceGroupName est supprimé"
